@@ -1,0 +1,63 @@
+version: '3'
+
+volumes:
+  data:
+    driver: local
+
+services:
+  db:
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: example
+      POSTGRES_USER: example
+      POSTGRES_DB: example
+    volumes:
+      - data:/var/lib/postgresql/data:z
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "example"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  unstructured:
+    image: quay.io/unstructured-io/unstructured-api:latest
+    restart: always
+    ports:
+      - "4000:4000"
+    command:
+      - "--port"
+      - "4000"
+      - "--host"
+      - "0.0.0.0"
+
+  api:
+    build: ./api
+    restart: always
+    command: uvicorn main:app --host 0.0.0.0 --port 8000
+    environment:
+      POSTGRES_PASSWORD: example
+      POSTGRES_USER: example
+      POSTGRES_DB: example
+      POSTGRES_HOST: db
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+    volumes:
+      - ./api:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - unstructured
+
+  # ui:
+  #   build: ./ui
+  #   restart: always
+  #   environment:
+  #     REACT_APP_API_URL: http://localhost:8000
+  #   ports:
+  #     - "3000:3000"
+  #   volumes:
+  #     - ./ui/src:/usr/src/app/src
+  #     - ./ui/public:/usr/src/app/public

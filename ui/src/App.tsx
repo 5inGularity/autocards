@@ -1,45 +1,41 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import apiFetch from './api';
 
-interface Data {
+type Article = {
   id: number;
-  name: string;
-  description: string;
+  title: string;
+  url: string;
+  status: string;
 }
 
 function App() {
-  const [data, setData] = useState<Data[]>([]);
+  const [articles, setArticles] = useState<Article[]>([]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      const result = await fetch('/db');
-      const data = await result.json();
-      setData(data);
-    };
-    fetchData();
-  }, []);
+    const fetchArticles = async () => {
+      const articlesResp = await apiFetch("/articles");
+      const articles = await articlesResp.json() as unknown as Article[];
+      console.log(articles);
+      setArticles(articles);
+    }
+    fetchArticles();
+  }, [])
 
   return (
-    <div>
-      <h1>Example App</h1>
-      <table>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Description</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.map(item => (
-            <tr key={item.id}>
-              <td>{item.id}</td>
-              <td>{item.name}</td>
-              <td>{item.description}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Url</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {articles.map(a => <tr key={a.id}>
+          <td>{a.url}</td>
+          <td>{a.status}</td>
+        </tr>)}
+      </tbody>
+    </table>
   );
 }
 

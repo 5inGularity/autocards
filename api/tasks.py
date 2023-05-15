@@ -1,5 +1,7 @@
 from typing import List
-from db.models import Article, ArticleStatus
+from db.models import Article, ArticleStatus, Card as CardModel
+from db.db import SessionLocal
+from schemas import Card
 from sqlalchemy.orm import Session
 import requests
 import tempfile
@@ -25,26 +27,18 @@ Do not return anything else but the JSON object conforming to the above schema.
 """
 
 
-class Card(BaseModel):
-    front: str = Field(description="text that should be on the front of the card")
-    back: str = Field(description="text that should be at the back of the card")
-
-
 class Cards(BaseModel):
     cards: List[Card] = Field(description="list of flash cards")
 
 
-def load_content(content_path: str):
-    loader = UnstructuredAPIFileLoader(
-        content_path,
-        url="http://unstructured:4000/general/v0/general",
-        content_type="text/html",
-    )
-    documents = loader.load()
-    documents = TokenTextSplitter(chunk_size=1000, chunk_overlap=0).split_documents(
-        documents
-    )
+def save_cards(cards: List[Card], article: Article, db: Session):
+    for card in cards:
+        card.article_id = article.id
+    db.add_all([CardModel(**card.dict()) for card in cards])
+    db.commit()
 
+
+def get_cards(documents):
     llm = OpenAI(temperature=0, model_name="text-davinci-003", max_tokens=2000)
 
     output_parser = PydanticOutputParser(pydantic_object=Cards)
@@ -66,9 +60,21 @@ def load_content(content_path: str):
         for doc in documents:
             resp = llm_chain.run(doc)
             cards.cards = cards.cards + output_parser.parse(resp).cards
-        print(cards.json(indent=2))
+        return cards.cards
     except json.JSONDecodeError as e:
         raise Exception(f"Could not decode openAI response: {resp}", e)
+
+
+def load_content(content_path: str):
+    loader = UnstructuredAPIFileLoader(
+        content_path,
+        url="http://unstructured:4000/general/v0/general",
+        content_type="text/html",
+    )
+    documents = loader.load()
+    return TokenTextSplitter(chunk_size=1000, chunk_overlap=0).split_documents(
+        documents
+    )
 
 
 def download_content(url: str):
@@ -81,26 +87,33 @@ def download_content(url: str):
         raise Exception(f"Could not download from url {url}. Error: {response.content}")
 
 
-def process_article(article: Article, db: Session):
-    if article.url:
-        article.status = ArticleStatus.DOWNLOADING
-        db.add(article)
-        db.commit()
-        db.refresh(article)
-        try:
-            (content_path, content) = download_content(article.url)
-            article.status = ArticleStatus.PROCESSING
-            article.content = content
+def process_article(article_id: int):
+    with SessionLocal() as db:
+        article = db.query(Article).get(article_id)
+        if article is None:
+            logging.error(f"Article with id {article_id} is not present anymore.")
+            return
+        if article.url:
+            article.status = ArticleStatus.DOWNLOADING
             db.add(article)
             db.commit()
+            db.refresh(article)
+            try:
+                (content_path, content) = download_content(article.url)
+                article.status = ArticleStatus.PROCESSING
+                article.content = content
+                db.add(article)
+                db.commit()
 
-            load_content(content_path)
-            article.status = ArticleStatus.READY
-        except Exception as e:
-            logging.exception(
-                f"Error processing article {article.title}: %s", e, exc_info=True
-            )
-            article.status = ArticleStatus.ERROR
-            article.error = "Processing error"
-        db.add(article)
-        db.commit()
+                docs = load_content(content_path)
+                cards = get_cards(docs)
+                save_cards(cards, article, db)
+                article.status = ArticleStatus.READY
+            except Exception as e:
+                logging.exception(
+                    f"Error processing article {article.title}: %s", e, exc_info=True
+                )
+                article.status = ArticleStatus.ERROR
+                article.error = "Processing error"
+            db.add(article)
+            db.commit()

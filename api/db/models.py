@@ -1,7 +1,8 @@
 from enum import Enum
 
-from sqlalchemy import Column, Integer, String, Enum as EnumType
+from sqlalchemy import Column, Integer, String, Enum as EnumType, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
+
 
 Base = declarative_base()
 
@@ -25,3 +26,12 @@ class Article(Base):
     )
     content = Column(String)
     error = Column(String)
+
+
+class Card(Base):
+    __tablename__ = "cards"
+
+    id = Column(Integer, primary_key=True, index=True)
+    front = Column(String, nullable=False)
+    back = Column(String, nullable=False)
+    article_id = Column(Integer, ForeignKey("articles.id"))

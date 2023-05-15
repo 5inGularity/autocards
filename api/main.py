@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from db.db import SessionLocal
 from db import models
-from schemas import Article
+from schemas import Article, Card
 from tasks import process_article
 import logging
 
@@ -44,7 +44,7 @@ def create_article(
     db.add(article)
     db.commit()
     db.refresh(article)
-    background_tasks.add_task(process_article, article, db)
+    background_tasks.add_task(process_article, article.id)
     return Article.from_orm(article)
 
 
@@ -59,3 +59,8 @@ def get_article(article_id: int, db: Session = Depends(get_db)):
     if article is None:
         raise HTTPException(status_code=400, detail="Article not found")
     return article
+
+
+@app.get("/articles/{article_id}/cards", response_model=List[Card])
+def get_cards(article_id: int, db: Session = Depends(get_db)):
+    return db.query(models.Card).filter_by(article_id=article_id).all()

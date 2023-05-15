@@ -7,6 +7,7 @@ from unstructured.partition.json import partition_json
 from langchain.document_loaders import UnstructuredAPIFileLoader
 from langchain import OpenAI, PromptTemplate, LLMChain
 from langchain.output_parsers import PydanticOutputParser
+from langchain.text_splitter import TokenTextSplitter
 from pydantic import BaseModel, Field
 from typing import List
 import json
@@ -14,11 +15,11 @@ import logging
 
 
 PROMPT = """
-In the following text delimited with triple backticks, identify the most important ideas, sort them in descending order of importance
-, take the top 5 ideas and create flash cards for them. Where a flash card has front text and a back text.
+In the following text delimited with triple backticks, identify the five most important ideas, and create flash cards for them. 
+Where a flash card has front text and a back text.
 For example, if the key idea is "LLM means Large Language Model" then the flash card could be "front" : "LLM" and "back": "Large Language Model". 
 {format_instructions}
-Do not return anything else but the JSON object conforming the above schema.
+Do not return anything else but the JSON object conforming to the above schema.
 
 ```{text}```
 """
@@ -40,12 +41,15 @@ def load_content(content_path: str):
         content_type="text/html",
     )
     documents = loader.load()
+    documents = TokenTextSplitter(chunk_size=1000, chunk_overlap=0).split_documents(
+        documents
+    )
 
-    llm = OpenAI(temperature=0, model_name="text-davinci-003")
+    llm = OpenAI(temperature=0, model_name="text-davinci-003", max_tokens=2000)
 
     output_parser = PydanticOutputParser(pydantic_object=Cards)
 
-    chain = LLMChain(
+    llm_chain = LLMChain(
         llm=llm,
         prompt=PromptTemplate(
             template=PROMPT,
@@ -53,11 +57,15 @@ def load_content(content_path: str):
             partial_variables={
                 "format_instructions": output_parser.get_format_instructions
             },
+            output_parser=output_parser,
         ),
     )
-    resp = chain.run(documents)
+
     try:
-        cards = output_parser.parse(resp)
+        cards = Cards(cards=[])
+        for doc in documents:
+            resp = llm_chain.run(doc)
+            cards.cards = cards.cards + output_parser.parse(resp).cards
         print(cards.json(indent=2))
     except json.JSONDecodeError as e:
         raise Exception(f"Could not decode openAI response: {resp}", e)

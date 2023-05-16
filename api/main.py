@@ -64,3 +64,12 @@ def get_article(article_id: int, db: Session = Depends(get_db)):
 @app.get("/articles/{article_id}/cards", response_model=List[Card])
 def get_cards(article_id: int, db: Session = Depends(get_db)):
     return db.query(models.Card).filter_by(article_id=article_id).all()
+
+
+@app.delete("/articles/{article_id}")
+def delete_article(article_id: int, db: Session = Depends(get_db)):
+    article = db.query(models.Article).get(article_id)
+    if article is None:
+        raise HTTPException(status_code=400, detail="Article not found")
+    db.delete(article)
+    db.commit()

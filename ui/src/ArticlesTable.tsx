@@ -52,6 +52,20 @@ function ArticlesTable() {
     }
   }
 
+  const deleteArticle = async(articleId: number) => {
+    const resp = await apiFetch("/articles/" + articleId, {
+        method: "DELETE",
+        headers: {
+            "Content-type" : "application/json"
+        }
+    })
+    if(resp.status !== 200) {
+        console.log(resp.text);
+    } else {
+        fetchArticles();
+    }
+  }
+
   return (
     <>
         <div className='p-4 flex flex-row w-full'>
@@ -78,6 +92,7 @@ function ArticlesTable() {
                 <td className='px-6 py-4'>{a.url}</td>
                 <td className='px-6 py-4'>{a.status}</td>
                 <td className='text-4xl px-6 py-4'>{a.status === "ready" && <a href={`${a.id}/cards`}>▶️</a>}</td>
+                <td className='text-4xl px-6 py-4'><span className='cursor-pointer' onClick={() => deleteArticle(a.id)}>🗑️</span></td>
                 </tr>)}
             </tbody>
         </table>

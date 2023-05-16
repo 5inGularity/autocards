@@ -1,41 +1,29 @@
-import React, { useEffect, useState } from 'react';
-import apiFetch from './api';
+import {
+  createBrowserRouter,
+  RouterProvider,
+} from "react-router-dom";
+import ArticlesTable from "./ArticlesTable";
+import Cards, { loader as CardsLoader} from "./Cards";
+import React from "react";
 
-type Article = {
-  id: number;
-  title: string;
-  url: string;
-  status: string;
-}
 
 function App() {
-  const [articles, setArticles] = useState<Article[]>([]);
-
-  useEffect(() => {
-    const fetchArticles = async () => {
-      const articlesResp = await apiFetch("/articles");
-      const articles = await articlesResp.json() as unknown as Article[];
-      console.log(articles);
-      setArticles(articles);
-    }
-    fetchArticles();
-  }, [])
+  const router = createBrowserRouter([
+    {
+      path: "/",
+      element: <ArticlesTable></ArticlesTable>,
+    },
+    {
+      path: "/:articleId/cards",
+      element: <Cards></Cards>,
+      loader: CardsLoader
+    },
+  ]);
 
   return (
-    <table>
-      <thead>
-        <tr>
-          <th>Url</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        {articles.map(a => <tr key={a.id}>
-          <td>{a.url}</td>
-          <td>{a.status}</td>
-        </tr>)}
-      </tbody>
-    </table>
+    <React.StrictMode>
+      <RouterProvider router={router} />
+    </React.StrictMode>
   );
 }
 

@@ -34,4 +34,4 @@ class Card(Base):
     id = Column(Integer, primary_key=True, index=True)
     front = Column(String, nullable=False)
     back = Column(String, nullable=False)
-    article_id = Column(Integer, ForeignKey("articles.id"))
+    article_id = Column(Integer, ForeignKey("articles.id", ondelete="CASCADE"))

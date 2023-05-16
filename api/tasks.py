@@ -17,7 +17,7 @@ import logging
 
 
 PROMPT = """
-In the following text delimited with triple backticks, identify the five most important ideas, and create flash cards for them. 
+In the following text delimited with triple backticks, identify at most five most important facts, and create flash cards for them. 
 Where a flash card has front text and a back text.
 For example, if the key idea is "LLM means Large Language Model" then the flash card could be "front" : "LLM" and "back": "Large Language Model". 
 {format_instructions}

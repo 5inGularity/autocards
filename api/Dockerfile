@@ -5,12 +5,14 @@ FROM python:3.10-slim-buster
 WORKDIR /app
 
 # Copy the necessary files to the container
-COPY * /app/
+COPY poetry.lock pyproject.toml /app/
 
 # Install Poetry and the dependencies specified in pyproject.toml
 RUN pip install poetry && \
     poetry config virtualenvs.create false && \
     poetry install --no-dev
+
+COPY . /app/
 
 # Set the environment variable for Python to run in unbuffered mode
 ENV PYTHONUNBUFFERED=1

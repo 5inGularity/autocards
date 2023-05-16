@@ -6,11 +6,12 @@ volumes:
 
 services:
   ui:
+    image: lalitmishra/autocards-ui
     build: ./ui
     restart: always
     environment:
       REACT_APP_API_URL: http://api:8000
     ports:
-      - "3000:80"
+      - "80:80"
     depends_on:
       - api

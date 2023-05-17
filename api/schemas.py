@@ -1,5 +1,5 @@
 from typing import Optional
-
+from fastapi import UploadFile
 from pydantic import BaseModel, Field
 from db.models import ArticleStatus
 
@@ -26,9 +26,15 @@ class Card(BaseModel):
 
 
 class ArticleContent(BaseModel):
-    id: Optional[int]
     article_id: int
-    content: str
+    content: Optional[str]
 
     class Config:
         orm_mode = True
+
+
+class CreateArticleInput(BaseModel):
+    url: Optional[str]
+    title: Optional[str]
+    text: Optional[str]
+    file: Optional[UploadFile]

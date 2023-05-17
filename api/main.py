@@ -1,10 +1,10 @@
-from typing import List
-from fastapi import Depends, FastAPI, BackgroundTasks, HTTPException
+from typing import List, Union
+from fastapi import Depends, FastAPI, BackgroundTasks, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, load_only
 from db.db import SessionLocal
 from db import models
-from schemas import Article, Card, ArticleContent
+from schemas import Article, Card, ArticleContent, CreateArticleInput
 from tasks import process_article
 import logging
 
@@ -77,8 +77,10 @@ def delete_article(article_id: int, db: Session = Depends(get_db)):
 @app.get("/articles/{article_id}/content", response_model=ArticleContent)
 def get_article_content(article_id: int, db: Session = Depends(get_db)):
     content = (
-        db.query(models.ArticleContent).filter_by(article_id=article_id).one_or_none()
+        db.query(models.Article)
+        .options(load_only(models.Article.id, models.Article.content))
+        .get(article_id)
     )
-    if content is None:
+    if content is None or content.content is None:
         raise HTTPException(status_code=400, detail="Content not found")
-    return content
+    return ArticleContent(article_id=content.id, content=content.content)

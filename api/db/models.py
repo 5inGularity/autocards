@@ -25,14 +25,7 @@ class Article(Base):
         EnumType(ArticleStatus), nullable=False, default=ArticleStatus.WAITING
     )
     error = Column(String)
-
-
-class ArticleContent(Base):
-    __tablename__ = "content"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    article_id = Column(Integer, ForeignKey("articles.id", ondelete="CASCADE"))
-    content = Column(String, nullable=False)
+    content = Column(String)
 
 
 class Card(Base):

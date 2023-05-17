@@ -1,5 +1,5 @@
 from typing import List
-from db.models import Article, ArticleStatus, Card as CardModel, ArticleContent
+from db.models import Article, ArticleStatus, Card as CardModel
 from db.db import SessionLocal
 from schemas import Card
 from sqlalchemy.orm import Session
@@ -101,9 +101,8 @@ def process_article(article_id: int):
             try:
                 (content_path, content) = download_content(article.url)
                 article.status = ArticleStatus.PROCESSING
-                article_content = ArticleContent(article_id=article_id, content=content)
+                article.content = content
                 db.add(article)
-                db.add(article_content)
                 db.commit()
 
                 docs = load_content(content_path)

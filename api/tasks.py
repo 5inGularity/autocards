@@ -34,6 +34,7 @@ class Cards(BaseModel):
 def save_cards(cards: List[Card], article: Article, db: Session):
     for card in cards:
         card.article_id = article.id
+        card.id = None
     db.add_all([CardModel(**card.dict()) for card in cards])
     db.commit()
 

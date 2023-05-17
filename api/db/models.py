@@ -18,7 +18,7 @@ class ArticleStatus(Enum):
 class Article(Base):
     __tablename__ = "articles"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     title = Column(String, nullable=False)
     url = Column(String)
     status = Column(
@@ -31,7 +31,7 @@ class Article(Base):
 class Card(Base):
     __tablename__ = "cards"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     front = Column(String, nullable=False)
     back = Column(String, nullable=False)
     article_id = Column(Integer, ForeignKey("articles.id", ondelete="CASCADE"))

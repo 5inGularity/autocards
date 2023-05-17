@@ -17,7 +17,6 @@ export default function Cards() {
     const [currentCardIndex, setCurrentCardIndex] = useState(0);
     const [backVisible, setBackVisible] = useState(false);
     const cards  = useLoaderData() as Card[];
-    console.log(cards);
     return <>
         {cards.length === 0 && <div className="text-xl4 p-4 text-center">Sorry, no cards for this article.</div>}
         {cards.length !== 0 && 

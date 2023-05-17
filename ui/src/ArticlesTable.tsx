@@ -25,6 +25,17 @@ function ArticlesTable() {
     fetchArticles();
   }, [])
 
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      fetchArticles();
+    }, 5000);
+
+    // Clean up the interval on component unmount
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, []);
+
   const validateUrl = (text: string) => {
     if(text.length === 0 || validator.isURL(text)) {
         setUrlValid(true);

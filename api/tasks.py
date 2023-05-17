@@ -1,11 +1,10 @@
 from typing import List
-from db.models import Article, ArticleStatus, Card as CardModel
+from db.models import Article, ArticleStatus, Card as CardModel, ArticleContent
 from db.db import SessionLocal
 from schemas import Card
 from sqlalchemy.orm import Session
 import requests
 import tempfile
-from unstructured.partition.json import partition_json
 from langchain.document_loaders import UnstructuredAPIFileLoader
 from langchain import OpenAI, PromptTemplate, LLMChain
 from langchain.output_parsers import PydanticOutputParser
@@ -102,8 +101,9 @@ def process_article(article_id: int):
             try:
                 (content_path, content) = download_content(article.url)
                 article.status = ArticleStatus.PROCESSING
-                article.content = content
+                article_content = ArticleContent(article_id=article_id, content=content)
                 db.add(article)
+                db.add(article_content)
                 db.commit()
 
                 docs = load_content(content_path)

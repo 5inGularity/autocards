@@ -2,7 +2,7 @@ version: '3'
 
 services:
   ui:
-    image: lalitmishra/autocards-ui:0.0.4
+    image: lalitmishra/autocards-ui:0.0.6
     build: ./ui
     restart: always
     ports:

@@ -1,7 +1,7 @@
 from typing import List
 from fastapi import Depends, FastAPI, BackgroundTasks, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, load_only
 from db.db import SessionLocal
 from db import models
 from schemas import Article, Card
@@ -49,7 +49,18 @@ def create_article(
 
 @app.get("/articles", response_model=List[Article])
 def list_articles(db: Session = Depends(get_db)):
-    return db.query(models.Article).all()
+    return (
+        db.query(models.Article)
+        .options(
+            load_only(
+                models.Article.id,
+                models.Article.title,
+                models.Article.url,
+                models.Article.status,
+            )
+        )
+        .all()
+    )
 
 
 @app.get("/articles/{article_id}", response_model=Article)

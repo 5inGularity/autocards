@@ -4,6 +4,10 @@ volumes:
   data:
     driver: local
 
+networks:
+  autocardnet:
+    driver: bridge
+
 services:
   db:
     image: postgres:latest
@@ -21,6 +25,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - autocardnet
 
   unstructured:
     image: quay.io/unstructured-io/unstructured-api:latest
@@ -32,6 +38,8 @@ services:
       - "4000"
       - "--host"
       - "0.0.0.0"
+    networks:
+      - autocardnet
 
   api:
     image: lalitmishra/autocards-api
@@ -49,3 +57,5 @@ services:
     depends_on:
       - db
       - unstructured
+    networks:
+      - autocardnet

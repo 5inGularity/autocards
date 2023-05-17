@@ -1,17 +1,13 @@
 version: '3'
 
-volumes:
-  data:
-    driver: local
-
 services:
   ui:
-    image: lalitmishra/autocards-ui
+    image: lalitmishra/autocards-ui:0.0.4
     build: ./ui
     restart: always
-    environment:
-      REACT_APP_API_URL: http://api:8000
     ports:
       - "80:80"
     depends_on:
       - api
+    networks:
+      - autocardnet

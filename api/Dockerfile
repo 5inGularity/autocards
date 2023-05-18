@@ -1,6 +1,8 @@
 # Use the official Python image as the base image
 FROM python:3.10-slim-buster
 
+RUN apt-get update && apt-get install -y --no-install-recommends libmagic1
+
 # Set the working directory to /app
 WORKDIR /app
 

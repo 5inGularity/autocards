@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field
 from typing import List
 import json
 import logging
+import magic
 
 
 PROMPT = """
@@ -67,10 +68,12 @@ def get_cards(documents):
 
 
 def load_content(content_path: str):
+    mime = magic.Magic(mime=True)
+    content_type = mime.from_file(content_path)
     loader = UnstructuredAPIFileLoader(
         content_path,
         url="http://unstructured:4000/general/v0/general",
-        content_type="text/html",
+        content_type=content_type,
     )
     documents = loader.load()
     return TokenTextSplitter(chunk_size=1000, chunk_overlap=0).split_documents(
@@ -122,3 +125,5 @@ def process_article(article_id: int):
             )
             article.status = ArticleStatus.ERROR
             article.error = "Processing error"
+            db.add(article)
+            db.commit()

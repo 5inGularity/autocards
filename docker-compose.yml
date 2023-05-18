@@ -42,7 +42,7 @@ services:
       - autocardnet
 
   api:
-    image: lalitmishra/autocards-api:0.0.3
+    image: lalitmishra/autocards-api:0.0.4
     build: ./api
     restart: always
     command: uvicorn main:app --host 0.0.0.0 --port 8000

@@ -1,6 +1,7 @@
 from typing import List
 from db.models import Article, ArticleStatus, Card as CardModel
 from db.db import SessionLocal
+from fastapi import UploadFile
 from schemas import Card
 from sqlalchemy.orm import Session
 import requests
@@ -93,27 +94,31 @@ def process_article(article_id: int):
         if article is None:
             logging.error(f"Article with id {article_id} is not present anymore.")
             return
-        if article.url:
-            article.status = ArticleStatus.DOWNLOADING
-            db.add(article)
-            db.commit()
-            db.refresh(article)
-            try:
-                (content_path, content) = download_content(article.url)
-                article.status = ArticleStatus.PROCESSING
-                article.content = content
+        try:
+            if article.url:
+                article.status = ArticleStatus.DOWNLOADING
                 db.add(article)
                 db.commit()
+                db.refresh(article)
+                (content_path, content) = download_content(article.url)
+                article.content = content
+            elif article.content:
+                with tempfile.NamedTemporaryFile(delete=False) as f:
+                    f.write(article.content.encode("utf-8"))
+                    content_path = f.name
 
-                docs = load_content(content_path)
-                cards = get_cards(docs)
-                save_cards(cards, article, db)
-                article.status = ArticleStatus.READY
-            except Exception as e:
-                logging.exception(
-                    f"Error processing article {article.title}: %s", e, exc_info=True
-                )
-                article.status = ArticleStatus.ERROR
-                article.error = "Processing error"
+            article.status = ArticleStatus.PROCESSING
             db.add(article)
             db.commit()
+            docs = load_content(content_path)
+            cards = get_cards(docs)
+            save_cards(cards, article, db)
+            article.status = ArticleStatus.READY
+            db.add(article)
+            db.commit()
+        except Exception as e:
+            logging.exception(
+                f"Error processing article {article.title}: %s", e, exc_info=True
+            )
+            article.status = ArticleStatus.ERROR
+            article.error = "Processing error"

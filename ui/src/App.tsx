@@ -5,6 +5,7 @@ import {
 import ArticlesTable from "./ArticlesTable";
 import Cards, { loader as CardsLoader} from "./Cards";
 import React from "react";
+import AddArticleForm from "./AddArticleForm";
 
 
 function App() {
@@ -18,6 +19,10 @@ function App() {
       element: <Cards></Cards>,
       loader: CardsLoader
     },
+    {
+      path: "/articles/add",
+      element: <AddArticleForm></AddArticleForm>
+    }
   ]);
 
   return (

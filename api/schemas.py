@@ -37,4 +37,3 @@ class CreateArticleInput(BaseModel):
     url: Optional[str]
     title: Optional[str]
     text: Optional[str]
-    file: Optional[UploadFile]

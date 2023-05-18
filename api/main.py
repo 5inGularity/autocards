@@ -1,5 +1,5 @@
 from typing import List, Union
-from fastapi import Depends, FastAPI, BackgroundTasks, HTTPException, UploadFile
+from fastapi import Depends, FastAPI, BackgroundTasks, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session, load_only
 from db.db import SessionLocal
@@ -35,11 +35,20 @@ def get_db():
 
 @app.post("/articles/", response_model=Article)
 def create_article(
-    article: Article,
+    input: CreateArticleInput,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
 ):
-    article = models.Article(**article.dict())
+    if input.url:
+        article = models.Article(url=input.url, title=input.title)
+    elif input.text:
+        if not input.title:
+            raise HTTPException(
+                status_code=400, detail="Title is required when specifying text"
+            )
+        article = models.Article(title=input.title, content=input.text)
+    else:
+        raise HTTPException(status_code=400, detail="One of URL, Text is required")
     db.add(article)
     db.commit()
     db.refresh(article)
